@@ -249,10 +249,23 @@ TARGET_API_KEY=
 EOF
 
 # Install dependencies
-poetry install
+# Create a new virtual env
+python3 -m venv .venv
 
-# Run red team scan
-poetry run python ai-foundry-redteam-agent.py
+# Activate virtual env
+source .venv/bin/activate
+
+# Install packages
+pip install "azure-ai-evaluation[redteam]" \
+             azure-identity \
+             azure-ai-projects \
+             python-dotenv
+
+# Option 1: Run red team scan via CLI
+python ai-foundry-redteam-agent.py
+
+# Option 2: Run script using VS Code
+# View ai-foundry-redteam-agent.py in VS Code and launch with F5
 
 # View local scan results in the latest`.scan_Bot_Red_Team_Scan_*` directory and `bot-redteam-scan.json` file.
 
@@ -284,10 +297,10 @@ This repository includes a standalone custom suffix attack script that demonstra
 cd azure-red-teaming-agent
 
 # Install dependencies (if not already done)
-poetry install
+# Refer to "Running Red Teaming Scan instructions" above to do so
 
-# Run custom suffix attack tests
-poetry run python custom-attack-strategy-test.py
+# Run custom suffix attack tests (can also be launched using VS Code 'F5')
+python custom-attack-strategy-test.py
 
 ```
 

@@ -45,6 +45,7 @@ venv.bak/
 # Test Runs
 results*
 *redteam-scan.json
+redteam.log
 .scan_*/
 .scan_*
 *.scan_*
