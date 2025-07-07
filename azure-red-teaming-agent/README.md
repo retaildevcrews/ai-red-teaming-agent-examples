@@ -2,6 +2,12 @@
 
 This directory contains an Azure AI Red Teaming Agent implementation with configurable payload formatting and response extraction.
 
+## Overview
+
+Red Teaming is a security practice that simulates adversarial attacks on either a model or application to determine any safety risks or vulnerabilities. Typically, red teaming has been conducted manually after the application has been fully deployed, which can be a time and resource intensive process. Through AI Red Teaming Agent, teams can now run automated red teaming scans in a repeatable manner, accelerating the overall testing timeline. Therefore, the team can also incorporate the AI red teaming agent in their CI/CD builds to ensure their app meets necessary safety guidelines long before it gets released.
+
+AI Red Teaming leverages the [PyRIT](https://azure.github.io/PyRIT/) framework and conducts attacks based on combinations of `risk categories` per `attack strategies`. [Risk Categories](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/ai-red-teaming-agent#supported-risk-categories) range from `Hateful/Unfair`, `Sexual`, `Violent` and `Self Harm`, while [Attack Strategies](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/ai-red-teaming-agent#supported-attack-strategies) such as flipping characters, encoding in base64 and more are brought over from PyRIT. The AI Red Teaming agent also provides an unfiltered adversarial LLM that users can provide custom seed prompts and prompt suffixes to kick-start custom attacks.
+
 ## Features
 
 - **Configuration-driven**: Payload and response handling are defined in JSON configuration files
@@ -17,31 +23,99 @@ This directory contains an Azure AI Red Teaming Agent implementation with config
 - `red_team_config.json` - Configuration file for payload and response handling
 - `sample_credentials.txt` - Sample environment variables file
 
-## Quick Start
+## Infrastructure Setup
 
-1. **Copy the sample credentials file:**
+To run a red teaming scan, you'll need these following resources:
 
-   ```bash
-   cp sample_credentials.txt credentials.env
-   ```
+1. Azure AI Foundry
+2. Project within Azure AI Foundry
+3. Blob Storage Account
+4. Connection between Azure AI Foundry and Blob Storage Account (**Note**: Use Entra ID only, Account Key Auth does NOT work!)
 
-2. **Edit credentials.env with your actual values:**
+You can execute a red teaming run locally or in AI Foundry. However, when this document was written, running redTeaming scans in the cloud (Azure AI Foundry instance) only supported Azure OpenAI model deployments in your Azure AI Foundry project as a target, and not custom endpoints.
 
-   ```bash
-   AZURE_AI_FOUNDRY_ENDPOINT=https://your-foundry-endpoint.cognitiveservices.azure.com/
-   TARGET_ENDPOINT=http://localhost:8080/invoke
-   TARGET_API_KEY=your-api-key-here
-   ```
+In this guide, we'll run the red team scan locally against a generative AI endpoint and upload the results to Azure AI Foundry. You can also access the test results locally, via the script's output artifacts such as the `.scan_Bot_Red_Team_Scan_*` directory and `bot-redteam-scan.json` file.
 
-3. **Run the red teaming agent:**
+### Login and create resources
 
-   ```bash
-   python ai-foundry-redteam-agent.py
-   ```
+``` bash
+# get your Tenant ID from Azure Portal
+az login --tenant <YOUR-TENANT-ID>
 
-## Configuration
+az account set -s <SUBSCRIPTION-NAME>
+```
 
-The new configuration system abstracts payload formatting and response extraction into external JSON files, eliminating hardcoded logic in Python.
+Create a Resource Group where all the assets will be deployed.
+
+```bash
+export RESOURCE_GROUP="rg-project"
+
+# List of Azure Red Teaming supported regions can be found at:
+# https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/develop/run-scans-ai-red-teaming-agent#region-support
+export RESOURCE_GROUP_LOCATION="eastus2"
+
+# Optional: Run the following if you haven't created resource group before
+# az group create --name $RESOURCE_GROUP --location $RESOURCE_GROUP_LOCATION
+```
+
+Run the Bicep script
+
+```bash
+# only use a-z and 0-9 - do not include punctuation or uppercase characters
+# must be between 5 and 16 characters long
+# must start with a-z (only lowercase)
+export AI_FOUNDRY_NAME="your-foundry-name"
+
+cd azure-red-teaming-agent # assumes you are at the root of the project
+
+az deployment group create \
+  --resource-group $RESOURCE_GROUP \
+  --template-file redteam-setup.bicep \
+  --parameters aiFoundryName=$AI_FOUNDRY_NAME location=$RESOURCE_GROUP_LOCATION
+```
+
+## Running a Red Teaming Scan
+
+Run the Red Teaming Scan.
+
+```bash
+cd azure-red-teaming-agent # assumes you are at the root of the project
+
+# Copy over enviornment variables
+cat <<EOF > "./credentials.env"
+AZURE_AI_FOUNDRY_ENDPOINT="https://$AI_FOUNDRY_NAME.services.ai.azure.com/api/projects/$AI_FOUNDRY_NAME-proj"
+TARGET_ENDPOINT="http://localhost:8080/invoke"
+TARGET_API_KEY=
+EOF
+
+# Install dependencies
+# Create a new virtual env
+python3 -m venv .venv
+
+# Activate virtual env
+source .venv/bin/activate
+
+# Install packages
+pip install "azure-ai-evaluation[redteam]" \
+             azure-identity \
+             azure-ai-projects \
+             python-dotenv
+
+# Option 1: Run red team scan via CLI
+python ai-foundry-redteam-agent.py
+
+# Option 2: Run script using VS Code
+# View ai-foundry-redteam-agent.py in VS Code and launch with F5
+
+# Optional: Run red team scan with a custom configuration file (see section below for more info)
+python ai-foundry-redteam-agent.py --config red_team_config.json
+
+# View local scan results in the latest`.scan_Bot_Red_Team_Scan_*` directory and `bot-redteam-scan.json` file.
+```
+
+## Red Teaming Configuration
+
+The configuration system abstracts payload formatting and response extraction into external JSON files, eliminating hardcoded logic in Python.
 
 ### JSON Configuration File (`red_team_config.json`)
 
@@ -124,7 +198,7 @@ The response extraction uses dot notation to navigate nested JSON structures:
 
 Negative indices are supported for arrays (`-1` for last element, `-2` for second-to-last, etc.).
 
-## Example: Adapting to a Different API
+### Example: Adapting to a Different API
 
 If your target API expects a different payload format, create a new configuration:
 
@@ -159,117 +233,6 @@ If your target API expects a different payload format, create a new configuratio
 
 This flexibility allows you to test different APIs without modifying the Python code.
 
----
-
-## Original Azure AI Foundry Red Teaming Documentation
-
-## Overview
-
-Red Teaming is a security practice that simulates adversarial attacks on either a model or application to determine any safety risks or vulnerabilities. Typically, red teaming has been conducted manually after the application has been fully deployed, which can be a time and resource intensive process. Through AI Red Teaming Agent, teams can now run automated red teaming scans in a repeatable manner, accelerating the overall testing timeline. Therefore, the team can also incorporate the AI red teaming agent in their CI/CD builds to ensure their app meets necessary safety guidelines long before it gets released.
-
-AI Red Teaming leverages the [PyRIT](https://azure.github.io/PyRIT/) framework and conducts attacks based on combinations of `risk categories` per `attack strategies`. [Risk Categories](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/ai-red-teaming-agent#supported-risk-categories) range from `Hateful/Unfair`, `Sexual`, `Violent` and `Self Harm`, while [Attack Strategies](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/ai-red-teaming-agent#supported-attack-strategies) such as flipping characters, encoding in base64 and more are brought over from PyRIT. The AI Red Teaming agent also provides an unfiltered adversarial LLM that users can provide custom seed prompts and prompt suffixes to kick-start custom attacks.
-
-### Comparison with PyRIT
-
-Here's a list of observations (during the time of writing) that we find notable when comparing Azure AI Red Teaming over PyRIT.
-
-- AI Red Teaming provides access to an unfiltered adversarial model (though this is abstracted away where PyRIT lets you specify an LLM endpoint + system prompt to create your own adversarial model)
-- Scans are relatively easy to setup in AI Red Teaming
-- AI Red Teaming is not very customizable (preset default attack surface for converters + default datasets). You can pass in some suffix or seed prompt options but there is a lot more configurability in PyRIT.
-- No Multi-turn support for text-based LLM interactions in AI Red Teaming.
-- Dependency on several Azure resources to run an AI Red Teaming scan, even if running locally.
-
-## Infrastructure Setup
-
-To run a red teaming scan, you can do so locally or in the cloud. However, when this document was written, running redTeaming scans in the cloud (Azure AI Foundry instance) only supported Azure OpenAI model deployments in your Azure AI Foundry project as a target, and not custom endpoints.
-
-In this guide, we'll run the red team scan locally against a generative AI endpoint and upload the results to Azure AI Foundry. You can also access the test results locally, via the script's output artifacts such as the `.scan_Bot_Red_Team_Scan_*` directory and `bot-redteam-scan.json` file.
-
-To get started, you'll need these following resources:
-
-1. Azure AI Foundry
-2. Project within Azure AI Foundry
-3. Blob Storage Account
-4. Connection between Azure AI Foundry and Blob Storage Account (**Note**: Use Entra ID only, Account Key Auth does NOT work!)
-
-### Login and create resources
-
-``` bash
-# get your Tenant ID from Azure Portal
-az login --tenant <YOUR-TENANT-ID>
-
-az account set -s <SUBSCRIPTION-NAME>
-
-```
-
-Create a Resource Group where all the assets will be deployed.
-
-```bash
-export RESOURCE_GROUP="rg-project"
-
-# List of Azure Red Teaming supported regions can be found at:
-# https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/develop/run-scans-ai-red-teaming-agent#region-support
-export RESOURCE_GROUP_LOCATION="eastus2"
-
-# Optional: Run the following if you haven't created resource group before
-# az group create --name $RESOURCE_GROUP --location $RESOURCE_GROUP_LOCATION
-
-```
-
-Run the Bicep script
-
-```bash
-# only use a-z and 0-9 - do not include punctuation or uppercase characters
-# must be between 5 and 16 characters long
-# must start with a-z (only lowercase)
-export AI_FOUNDRY_NAME="your-foundry-name"
-
-cd azure-red-teaming-agent # assumes you are at the root of the project
-
-az deployment group create \
-  --resource-group $RESOURCE_GROUP \
-  --template-file redteam-setup.bicep \
-  --parameters aiFoundryName=$AI_FOUNDRY_NAME location=$RESOURCE_GROUP_LOCATION
-
-```
-
-## Running Red Teaming Scan
-
-Run the Red Teaming Scan against generative AI endpoint.
-
-```bash
-
-cd azure-red-teaming-agent # assumes you are at the root of the project
-
-# Copy over enviornment variables
-cat <<EOF > "./credentials.env"
-AZURE_AI_FOUNDRY_ENDPOINT="https://$AI_FOUNDRY_NAME.services.ai.azure.com/api/projects/$AI_FOUNDRY_NAME-proj"
-TARGET_ENDPOINT="http://localhost:8080/invoke"
-TARGET_API_KEY=
-EOF
-
-# Install dependencies
-# Create a new virtual env
-python3 -m venv .venv
-
-# Activate virtual env
-source .venv/bin/activate
-
-# Install packages
-pip install "azure-ai-evaluation[redteam]" \
-             azure-identity \
-             azure-ai-projects \
-             python-dotenv
-
-# Option 1: Run red team scan via CLI
-python ai-foundry-redteam-agent.py
-
-# Option 2: Run script using VS Code
-# View ai-foundry-redteam-agent.py in VS Code and launch with F5
-
-# View local scan results in the latest`.scan_Bot_Red_Team_Scan_*` directory and `bot-redteam-scan.json` file.
-
-```
 
 ## Custom Attack Strategies
 
@@ -321,3 +284,13 @@ For comprehensive red teaming:
 3. **Combine insights** from both approaches to get complete security coverage
 
 This hybrid approach ensures you get both the standardized testing capabilities of Azure AI Foundry and the flexibility to test custom attack scenarios specific to your application.
+
+## Comparison with PyRIT
+
+Here's a list of observations (during the time of writing) that we find notable when comparing Azure AI Red Teaming over PyRIT.
+
+- AI Red Teaming provides access to an unfiltered adversarial model (though this is abstracted away where PyRIT lets you specify an LLM endpoint + system prompt to create your own adversarial model)
+- Scans are relatively easy to setup in AI Red Teaming
+- AI Red Teaming is not very customizable (preset default attack surface for converters + default datasets). You can pass in some suffix or seed prompt options but there is a lot more configurability in PyRIT.
+- No Multi-turn support for text-based LLM interactions in AI Red Teaming.
+- Dependency on several Azure resources to run an AI Red Teaming scan, even if running locally.
