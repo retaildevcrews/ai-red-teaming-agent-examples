@@ -1,4 +1,5 @@
 import asyncio
+import argparse
 import json
 import logging  # Added for detailed SDK logging
 import os
@@ -17,7 +18,7 @@ load_dotenv("credentials.env")
 logging.basicConfig(level=logging.DEBUG)
 
 
-def create_target_callback(config_path: str = "red_team_config.json"):
+def create_target_callback(config_path: str):
     """Factory function to create a target callback with configuration."""
     config = RedTeamConfig.from_file(config_path)
 
@@ -88,6 +89,17 @@ async def main():
     Main function to run the Azure AI Red Teaming Agent test.
     Demonstrates how to use the Azure AI Red Teaming Agent to evaluate a target model.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Run Azure AI Red Teaming Agent with custom configuration")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="red_team_config.json",
+        help="Path to the configuration file (default: red_team_config.json)"
+    )
+    args = parser.parse_args()
+
+
     print("Running Azure AI Red Teaming Agent example...")
 
     # Get Azure Foundry credentials from environment variables
@@ -95,7 +107,7 @@ async def main():
     credential = DefaultAzureCredential()
 
     # Create the target callback using configuration
-    target_callback = create_target_callback("red_team_config.json")
+    target_callback = create_target_callback(args.config)
 
     # Test the callback function before running the scan
     print("Testing callback function...")
