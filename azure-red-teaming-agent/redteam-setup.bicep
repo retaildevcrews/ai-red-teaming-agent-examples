@@ -105,3 +105,15 @@ resource cicdCognitiveServicesUserRoleAssignment 'Microsoft.Authorization/roleAs
     principalType: 'ServicePrincipal'
   }
 }
+
+resource cicdIdentityCreds 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2025-01-31-preview' = if (createCICDIdentity) {
+  parent: cicdIdentity
+  name: 'gh-action-credentials'
+  properties: {
+    audiences: [
+      'api://AzureADTokenExchange'
+    ]
+    issuer: 'https://token.actions.githubusercontent.com'
+    subject: 'repo:retaildevcrews/botify:ref:refs/heads/main'
+  }
+}
