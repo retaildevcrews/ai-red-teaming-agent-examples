@@ -114,6 +114,6 @@ resource cicdIdentityCreds 'Microsoft.ManagedIdentity/userAssignedIdentities/fed
       'api://AzureADTokenExchange'
     ]
     issuer: 'https://token.actions.githubusercontent.com'
-    subject: 'repo:retaildevcrews/botify:ref:refs/heads/main'
+    subject: 'repo:retaildevcrews/ai-red-teaming-agent-examples:ref:refs/heads/main'
   }
 }
