@@ -1,0 +1,62 @@
+{
+  "name": "AI Red Teaming Agent Dev Container",
+  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+  "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm", // pinning a OS version
+  "features": {
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers-contrib/features/poetry:latest": {},
+    "ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
+        "plugins": "python poetry gitfast git-extras command-not-found colorize colored-man-pages copyfile copypath extract history"
+    },
+    "ghcr.io/devcontainers-contrib/features/pipx-package:1": {
+      "package": "jinja2-cli"
+    },
+    "ghcr.io/devcontainers-contrib/features/bin:1": {}, // for any binary release installation
+    "ghcr.io/devcontainers-contrib/features/neovim-apt-get:1": {}
+  },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb",
+    "storage": "16gb"
+  },
+  // set container specific settings
+  "customizations": {
+    "vscode": {
+      // Install extensions
+      "extensions": [
+        "stkb.rewrap",
+        "redhat.vscode-yaml",
+        "davidanson.vscode-markdownlint",
+        "visualstudioexptteam.vscodeintellicode",
+        "github.vscode-pull-request-github",
+        "oderwat.indent-rainbow",
+        "eriklynd.json-tools",
+        "streetsidesoftware.code-spell-checker",
+        "humao.rest-client",
+        "eamodio.gitlens",
+        "gruntfuggly.todo-tree",
+        "timonwong.shellcheck",
+        "bierner.markdown-mermaid",
+        "github.vscode-github-actions",
+        "pomdtr.excalidraw-editor",
+        "ms-azuretools.vscode-bicep",
+        "tamasfe.even-better-toml",
+        "github.copilot",
+        "dotjoshjohnson.xml",
+        // Python specific
+        "ms-python.python",
+        "ms-python.debugpy",
+        "kevinrose.vsc-python-indent",
+        "donjayamanne.python-environment-manager",
+        "njpwerner.autodocstring",
+        "ms-toolsai.vscode-ai",
+        "ms-toolsai.jupyter",
+        "charliermarsh.ruff",
+        "samuelcolvin.jinjahtml" // replacing wholroyd.jinja, since its unmaintained
+      ]
+    }
+  },
+  // Run Bash scripts
+  "onCreateCommand": "/bin/bash ./.devcontainer/on-create.bash"
+}
