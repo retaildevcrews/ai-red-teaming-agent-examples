@@ -2,6 +2,33 @@
 
 This directory contains an Azure AI Red Teaming Agent implementation with configurable payload formatting and response extraction.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Files](#files)
+- [Infrastructure Setup](#infrastructure-setup)
+  - [Login and create resources](#login-and-create-resources)
+- [Running a Red Teaming Scan](#running-a-red-teaming-scan)
+- [Red Teaming Configuration](#red-teaming-configuration)
+  - [JSON Configuration File](#json-configuration-file-red_team_configjson)
+  - [Target Configuration](#target-configuration)
+  - [Payload Template](#payload-template)
+  - [Response Extraction](#response-extraction)
+  - [Environment Variable Substitution](#environment-variable-substitution)
+  - [Customizing for Different APIs](#customizing-for-different-apis)
+  - [Response Path Syntax](#response-path-syntax)
+  - [Example: Adapting to a Different API](#example-adapting-to-a-different-api)
+- [Custom Attack Strategies](#custom-attack-strategies)
+  - [Why Use Custom Attack Strategies?](#why-use-custom-attack-strategies)
+  - [Running Custom Attack Tests](#running-custom-attack-tests)
+  - [Custom Attack Strategy Limitations](#custom-attack-strategy-limitations)
+  - [Recommended Workflow](#recommended-workflow)
+- [Comparison with PyRIT](#comparison-with-pyrit)
+- [Running Red Teaming through CI/CD](#running-red-teaming-through-cicd)
+  - [Authenticate CI/CD GH Action](#authenticate-cicd-gh-action)
+  - [Setup GH Action Environment Variables](#setup-gh-action-environment-variables)
+
 ## Overview
 
 Red Teaming is a security practice that simulates adversarial attacks on either a model or application to determine any safety risks or vulnerabilities. Typically, red teaming has been conducted manually after the application has been fully deployed, which can be a time and resource intensive process. Through AI Red Teaming Agent, teams can now run automated red teaming scans in a repeatable manner, accelerating the overall testing timeline. Therefore, the team can also incorporate the AI red teaming agent in their CI/CD builds to ensure their app meets necessary safety guidelines long before it gets released.
@@ -110,8 +137,9 @@ python ai-foundry-redteam-agent.py
 # Optional: Run red team scan with a custom configuration file (see section below for more info)
 python ai-foundry-redteam-agent.py --config red_team_config.json
 
-# View local scan results in the latest`.scan_Bot_Red_Team_Scan_*` directory and `bot-redteam-scan.json` file.
 ```
+
+You can view the results locally ([more info](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/develop/run-scans-ai-red-teaming-agent#results-from-your-automated-scans)) or in your deployed AI Foundry instance ([more info](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/view-ai-red-teaming-results)).
 
 ## Red Teaming Configuration
 
@@ -294,3 +322,35 @@ Here's a list of observations (during the time of writing) that we find notable 
 - AI Red Teaming is not very customizable (preset default attack surface for converters + default datasets). You can pass in some suffix or seed prompt options but there is a lot more configurability in PyRIT.
 - No Multi-turn support for text-based LLM interactions in AI Red Teaming.
 - Dependency on several Azure resources to run an AI Red Teaming scan, even if running locally.
+
+## Running Red Teaming through CI/CD
+
+To keep up a regular cadence of red teaming your target system, it would be ideal to execute the runs in a CI/CD pipeline. An example on how to do so is included in the [sample red-team-scan workflow](../.github/workflows/red-teaming-scan.yaml).
+
+### Authenticate CI/CD GH Action
+
+You will need a Managed Identity to authenticate the GH action in enabling access to AI Foundry. Run the bicep script with the parameter `createCICDIdentity=true` to create this new identity and the necessary permissions.
+
+```bash
+cd azure-red-teaming-agent # assumes you are at the root of the project
+
+az deployment group create \
+  --resource-group $RESOURCE_GROUP \
+  --template-file redteam-setup.bicep \
+  --parameters aiFoundryName=$AI_FOUNDRY_NAME location=$RESOURCE_GROUP_LOCATION createCICDIdentity=true
+```
+
+Note that the CI/CD is set to run on push events to the `main` branch. If you want to modify this, you will need to update the Managed Identity's Federated Credential accordingly. To do so, follow the [Azure documentation](https://learn.microsoft.com/en-in/entra/workload-id/workload-identity-federation-create-trust-user-assigned-managed-identity?pivots=identity-wif-mi-methods-azp#github-actions-deploying-azure-resources).
+
+More information in authenticating a GH Action pipeline can be found [here](https://github.com/Azure/login?tab=readme-ov-file#login-with-openid-connect-oidc-recommended).
+
+### Setup GH Action Environment Variables
+
+Since the `ai-foundry-redteam-agent.py` script inputs environment variables in determining the AI Foundry and target endpoints, be sure to set the same for the GH Action.
+
+Create the secrets `AZURE_AI_FOUNDRY_ENDPOINT` and `TARGET_ENDPOINT` as a [repository secret](https://docs.github.com/en/actions/how-tos/security-for-github-actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) where the GH Action will be running.
+
+```yaml
+  AZURE_AI_FOUNDRY_ENDPOINT: ${{ secrets.AZURE_AI_FOUNDRY_ENDPOINT }}
+  TARGET_ENDPOINT: ${{ secrets.REDTEAM_TARGET_ENDPOINT }}
+```
