@@ -1,0 +1,92 @@
+{
+    "files.associations": {
+        "*.env": "plaintext"
+    },
+    // This Glob should be the same as .github/workflows/linter.yaml Markdownlint
+    "markdownlint.lintWorkspaceGlobs": [
+        "!**/.git",
+        "!**/.github/",
+        "!CHANGELOG.md",
+        "!CONTRIBUTING.md",
+        "!LICENSE"
+    ],
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/env": true,
+        "**/venv": true,
+        "**/.env": true,
+        "**/.venv": true,
+        "**/.pytest_cache*": true,
+        "**/__pycache__": true,
+        "**/.mypy_cache": true
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.mypy_cache": true,
+        "**/.pytest_cache*": true,
+        "**/.venv": true,
+        "**/env": true,
+        "**/venv": true
+    },
+    "files.trimTrailingWhitespace": true,
+    "files.trimFinalNewlines": true,
+    "files.insertFinalNewline": true,
+    "shellcheck.enable": true,
+    "shellcheck.enableQuickFix": true,
+    "shellcheck.ignoreFileSchemes": [
+        "git",
+        "gitfs",
+        "output",
+        "test"
+    ],
+    "[python]": {
+        // "editor.formatOnSave": true, // We don't want unnecessary git diffs
+        // "editor.defaultFormatter": "redhat.java",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "never" // We don't want unnecessary git diffs
+        },
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.detectIndentation": true,
+        "editor.foldingImportsByDefault": true,
+        "editor.insertSpaces": true,
+        "editor.suggest.snippetsPreventQuickSuggestions": false,
+        "files.autoSave": "afterDelay",
+        "files.autoSaveDelay": 5000
+    },
+    "[json]": {
+        "editor.indentSize": 2,
+        "editor.quickSuggestions": {
+            "strings": true
+        },
+        "editor.suggest.insertMode": "replace",
+        "editor.tabSize": 2
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+        "editor.formatOnSave": true,
+        "editor.formatOnSaveMode": "modificationsIfAvailable"
+    },
+    "editor.bracketPairColorization.enabled": true,
+    "editor.copyWithSyntaxHighlighting": false,
+    "editor.guides.bracketPairs": "active",
+    "editor.guides.highlightActiveBracketPair": true,
+    "editor.guides.highlightActiveIndentation": true,
+    "editor.inlineSuggest.enabled": true,
+    "editor.linkedEditing": true,
+    "editor.renderControlCharacters": true,
+    "editor.rulers": [
+        79,
+        118
+    ],
+    "editor.renderWhitespace": "selection",
+    "editor.indentSize": 4,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.wordWrap": "on",
+    "terminal.integrated.defaultProfile.linux": "zsh",
+    "explorer.excludeGitIgnore": false,
+}

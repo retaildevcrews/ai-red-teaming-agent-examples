@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from red_team_config import RedTeamConfig, extract_response_content, format_payload
 
-# Load environment variables from .env file
+# Load environment variables from credentials.env file
 load_dotenv("credentials.env")
 
 # Configure detailed logging for Azure SDK

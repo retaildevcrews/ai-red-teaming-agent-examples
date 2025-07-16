@@ -1,0 +1,35 @@
+[core]
+  whitespace = blank-at-eol,blank-at-eof,space-before-tab
+  pager = delta
+  editor = code --wait
+[pull]
+  rebase = false
+[alias]
+  #Basic Commands
+  st = status -uno
+  s = status -s -uno
+  br = branch
+  sw = switch
+  d = diff
+  dc = diff --cached
+  co = checkout
+  cm = commit
+  type = cat-file -t
+  dump = cat-file -p
+  #History
+  ls=log --pretty=format:'%C(yellow)%h%C(cyan)%d %C(dim red)%ad %C(reset)%s%C(blue) [%an]' --decorate --graph --date=short
+  ll=log --pretty=format:'%C(yellow)%h%C(cyan)%d %C(dim red)%ar %C(reset)%s%C(blue) [%an]' --decorate --graph --numstat
+  lnc=log --pretty=format:'%h %s [%cn]'
+  adog=log --all --decorate --oneline --graph --pretty=format:'%C(auto)%h%C(auto)%d %s %C(dim white)(%aN, %ar)'
+[filter "lfs"]
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
+[color]
+  diff = auto
+  status = auto
+  branch = auto
+  interactive = auto
+  ui = true
+  pager = true
