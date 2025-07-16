@@ -4,6 +4,14 @@ This directory contains a sample PyRIT implementation to run a red teaming and p
 
 Check out the [documentation](https://azure.github.io/PyRIT/) for more technical information about PyRIT, including architecture, setup guides and more.
 
+## Infrastructure Setup
+
+To run a red teaming scan through PyRIT, you'll need these following resources:
+
+- Azure OpenAI instance to power the adversarial LLM
+
+Follow the [Azure docs](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/overview#get-started-with-azure-openai) for more information on creating an Azure OpenAI resource.
+
 ## Quickstart
 
 Run PyRIT against the popular [Gandalf AI](https://gandalf.lakera.ai/) to attempt it to reveal a password.
